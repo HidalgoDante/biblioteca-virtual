@@ -61,7 +61,3 @@ Este proyecto fue desarrollado en conjunto por:
 
 Como parte de las Prácticas Profesionalizantes de la Tecnicatura Superior en Análisis de Sistemas.
 En búsqueda de mi primera experiencia profesional en el área IT.
-
-Migración a base de datos en servidor (MySQL/PostgreSQL)
-Exportación de reportes en PDF
-Mejoras visuales en la interfaz
