@@ -1,5 +1,5 @@
 # biblioteca-virtual
-📚 Sistema de Biblioteca
+📚 Biblioteca Virtual
 
 Aplicación de escritorio desarrollada en Python como parte de las Prácticas Profesionalizantes de la Tecnicatura Superior en Análisis de Sistemas.
 
@@ -24,7 +24,9 @@ Antes de la implementación, los préstamos y devoluciones se registraban manual
 ✔ Importación de datos mediante archivo CSV
 ✔ Interfaz gráfica intuitiva desarrollada en Tkinter
 
-🖥️ Captura del sistema
+🖥️ Capturas del sistema
+![Ventana principal de gestión de libros](screenshots/ventana_libros.png)
+![Ventana de préstamos](screenshots/ventana_prestamos.png)
 
 🛠️ Tecnologías utilizadas
 Python 
@@ -45,22 +47,21 @@ Biblioteca/
 
 🚀 Cómo ejecutar el proyecto
 
-1. Clonar el repositorio
-git clone https://github.com/tuusuario/sistema-biblioteca.git
-2. Ejecutar la aplicación
-python main.py
-
-No requiere instalación de dependencias externas, solo Python.
+1. git clone https://github.com/HidalgoDante/biblioteca-virtual.git
+2. cd biblioteca-virtual
+3. python -m venv venv
+4. venv\Scripts\activate      # Windows
+5. pip install -r requirements.txt
+6. python main.py
 
 🧠 Objetivo del proyecto
 
 El objetivo fue aplicar conceptos de desarrollo de software de escritorio, manejo de bases de datos relacionales y diseño de interfaces gráficas utilizando Python.
 
-👨‍💻 Autores
-Este proyecto fue desarrollado en conjunto por:
+👨‍💻 Autor
+Este proyecto fue desarrollado por:
 
 - Dante Sebastián Hidalgo
-- Fernando Buiani
 
 Como parte de las Prácticas Profesionalizantes de la Tecnicatura Superior en Análisis de Sistemas.
 En búsqueda de mi primera experiencia profesional en el área IT.
