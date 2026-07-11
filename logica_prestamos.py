@@ -39,3 +39,13 @@ def prestamos_caducados_db():
     cursor.execute("SELECT * FROM prestamos WHERE devuelto=0 AND fecha_devolucion < ? ORDER BY fecha_devolucion ASC",
         (hoy,))
     return cursor.fetchall()
+
+def prestamos_activos_db():
+    """Devuelve solamente los prestamos activos"""
+    cursor.execute("SELECT * FROM prestamos WHERE devuelto = 0")
+    return cursor.fetchall()
+
+def verificar_vencimientos_db():
+    """Devuelve los préstamos activos (no devueltos), para que la UI calcule cuáles están vencidos o por vencer."""
+    cursor.execute("SELECT nombre, telefono, libro, fecha_devolucion FROM prestamos WHERE devuelto=0")
+    return cursor.fetchall()
