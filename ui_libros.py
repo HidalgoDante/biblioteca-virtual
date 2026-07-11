@@ -470,7 +470,7 @@ def verificar_vencimientos_al_iniciar():
 # -------------------------
 # Interfaz principal (libros) - ventana principal
 # -------------------------
-root = tb.Window(themename="superhero")
+root = tb.Window(themename="darkly")
 root.title("Sistema de Biblioteca - Libros")
 root.geometry("1280x720")
 root.resizable(True, True)
