@@ -7,71 +7,24 @@ from tkinter import messagebox
 from tkinter import filedialog
 from tkinter import font as tkFont
 from datetime import datetime, timedelta
-
-# -------------------------
-# Conexión DB
-# -------------------------
-conn = sqlite3.connect("biblioteca.db")
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS libros (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    n_inv TEXT,
-    mfn TEXT,
-    fecha TEXT,
-    titulo TEXT,
-    autor TEXT,
-    editorial TEXT,
-    proc TEXT,
-    observaciones TEXT
-)
-""")
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS prestamos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT,
-    telefono TEXT,
-    carrera TEXT,
-    anio_cursada TEXT,
-    libro TEXT,
-    fecha_prestamo TEXT,
-    fecha_devolucion TEXT,
-    devuelto INTEGER DEFAULT 0
-)
-""")
-conn.commit()
-
+from db import conn, cursor
+import logica_libros as ll
 # -------------------------
 # Funciones - Libros
 # -------------------------
-
-def actualizar_lista_libros_combo():
-    """Devuelve lista de títulos actuales (usado por la ventana de préstamos)."""
-    cursor.execute("SELECT titulo FROM libros ORDER BY titulo ASC")
-    return [r[0] for r in cursor.fetchall()]
 
 def actualizar_combo_libros_en_ventana_prestamos():
     """Actualiza el combobox de la ventana de préstamos si está abierto."""
     global prestamos_win, combo_libros
     if prestamos_win is not None and combo_libros is not None:
-        combo_libros['values'] = actualizar_lista_libros_combo()
+        combo_libros['values'] = ll.actualizar_lista_libros_combo_db()
 
 def mostrar_todos_libros():
     for row in tree_libros.get_children():
         tree_libros.delete(row)
+        
     orden = combo_orden.get()
-    if orden == "Más reciente":
-        q = "SELECT * FROM libros ORDER BY id DESC"
-    elif orden == "Más viejo":
-        q = "SELECT * FROM libros ORDER BY id ASC"
-    elif orden == "Alfabético (Título)":
-        q = "SELECT * FROM libros ORDER BY titulo ASC"
-    else:
-        q = "SELECT * FROM libros"
-    cursor.execute(q)
-    regs = cursor.fetchall()
+    regs = ll.mostrar_todos_libros_db(orden)
     for i, r in enumerate(regs):
         tag = "evenrow" if i % 2 == 0 else "oddrow"
         tree_libros.insert("", "end", values=r, tags=(tag,))
@@ -90,14 +43,9 @@ def guardar_libro():
     if not entry_titulo.get().strip():
         messagebox.showwarning("Atención", "El título es obligatorio.")
         return
-    cursor.execute("""
-        INSERT INTO libros (n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, datos)
-    conn.commit()
+    ll.insertar_libro_db(datos)       #llama a logica_libros para agregar libro
     limpiar_campos_libro()
     mostrar_todos_libros()
-    # Actualiza combo en la ventana de préstamos si está abierta
     actualizar_combo_libros_en_ventana_prestamos()
 
 def limpiar_campos_libro():
@@ -119,16 +67,9 @@ def buscar_libros():
         tree_libros.delete(row)
     filtro_inv = entry_buscar_inv.get().strip()
     filtro_fecha = entry_buscar_fecha.get().strip()
-    q = "SELECT * FROM libros WHERE 1=1"
-    params = []
-    if filtro_inv:
-        q += " AND n_inv LIKE ?"
-        params.append("%" + filtro_inv + "%")
-    if filtro_fecha:
-        q += " AND fecha LIKE ?"
-        params.append("%" + filtro_fecha + "%")
-    cursor.execute(q, params)
-    regs = cursor.fetchall()
+    
+    regs = ll.buscar_libro_db(filtro_inv, filtro_fecha)
+    
     for i, r in enumerate(regs):
         tag = "evenrow" if i % 2 == 0 else "oddrow"
         tree_libros.insert("", "end", values=r, tags=(tag,))
@@ -163,9 +104,8 @@ def eliminar_libro():
         return
     vals = tree_libros.item(sel, "values")
     idb = vals[0]
-    if messagebox.askyesno("Confirmar", f"¿Eliminar '{vals[4]}'?"):
-        cursor.execute("DELETE FROM libros WHERE id=?", (idb,))
-        conn.commit()
+    if messagebox.askyesno("Confirmar", f"¿Eliminar '{vals[4]}'?"): #aca llamo a logica_libros para eliminar el libro
+        ll.eliminar_libro_db(idb)
         mostrar_todos_libros()
         actualizar_combo_libros_en_ventana_prestamos()
         limpiar_campos_libro()
@@ -283,7 +223,7 @@ def abrir_ventana_prestamos():
     entry_anio.grid(row=1, column=3, padx=4, pady=4)
 
     # Combo libros (actualiza con la DB)
-    combo_libros = tb.Combobox(frame, values=actualizar_lista_libros_combo(), width=55)
+    combo_libros = tb.Combobox(frame, values=ll.actualizar_lista_libros_combo_db(), width=55)
     combo_libros.grid(row=2, column=1, columnspan=1, padx=4, pady=4, sticky="w")
 
     # DateEntry para fechas
@@ -308,7 +248,7 @@ def abrir_ventana_prestamos():
     tb.Button(btn_frame_prestamos, text="Eliminar préstamo", command=eliminar_prestamo, bootstyle="danger-outline").pack(side="left", padx=4)
     tb.Button(btn_frame_prestamos, text="Marcar devuelto", command=marcar_devueltos, bootstyle="warning-outline").pack(side="left", padx=4)
     tb.Button(btn_frame_prestamos, text="Limpiar", command=limpiar_prestamo, bootstyle="secondary-outline").pack(side="left", padx=4)
-    tb.Button(btn_frame_prestamos, text="Actualizar lista libros", command=lambda: combo_libros.configure(values=actualizar_lista_libros_combo()), bootstyle="info-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Actualizar lista libros", command=lambda: combo_libros.configure(values=ll.actualizar_lista_libros_combo_db()), bootstyle="info-outline").pack(side="left", padx=4)
     tb.Button(btn_frame_prestamos, text="Ver historial", command=ver_historial_prestamos, bootstyle="info-outline").pack(side="left", padx=4)
     tb.Button(btn_frame_prestamos, text="Ver caducados", command=ver_prestamos_caducados, bootstyle="danger-outline").pack(side="left", padx=4)
 
