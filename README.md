@@ -35,10 +35,13 @@ SQLite (base de datos local)
 
 El sistema está organizado en módulos que separan la lógica de interfaz y base de datos:
 
-Interfaz gráfica (Tkinter)
-Gestión de datos (SQLite)
-Lógica de préstamos y consultas
-Importación de archivos CSV
+Biblioteca/
+├── main.py              # Punto de entrada
+├── db.py                 # Conexión y creación de tablas
+├── logica_libros.py       # Lógica de acceso a datos - libros
+├── logica_prestamos.py    # Lógica de acceso a datos - préstamos
+├── ui_libros.py           # Interfaz - ventana principal
+└── ui_prestamos.py        # Interfaz - ventana de préstamos
 
 🚀 Cómo ejecutar el proyecto
 

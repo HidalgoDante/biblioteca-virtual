@@ -160,8 +160,8 @@ def verificar_vencimientos_al_iniciar():
 def construir_ventana_libros():
     """Arma todos los widgets de la ventana principal de libros. Se llama una vez desde main.py."""
     global entry_inv, entry_mfn, entry_fecha, entry_titulo, entry_autor, entry_editorial, entry_proc, entry_obs, tree_libros, combo_orden, entry_buscar_inv, entry_buscar_fecha, id_seleccionado
-    root.title("Sistema de Biblioteca - Libros")
-    root.geometry("1280x720")
+    root.title("Biblioteca Virtual")
+    root.geometry("1340x720")
     root.resizable(True, True)
 
     label_font = tkFont.Font(family="Helvetica", size=9)
