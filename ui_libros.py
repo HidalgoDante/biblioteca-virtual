@@ -131,6 +131,14 @@ def importar_csv_libros():
     actualizar_combo_libros_en_ventana_prestamos()
     messagebox.showinfo("Importación finalizada", f"Libros importados: {insertados}\nFilas con error/omitidas: {errores}")
 
+def ver_historial_prestamos():
+    regs = lp.historial_prestamos_db()
+    _abrir_ventana_lista_prestamos("Historial de préstamos", regs)
+
+def ver_prestamos_caducados():
+    regs = lp.prestamos_caducados_db()
+    _abrir_ventana_lista_prestamos("Préstamos caducados", regs)
+    
 # -------------------------
 # Funciones - Préstamos (ventana secundaria)
 # -------------------------
@@ -336,7 +344,7 @@ def editar_prestamo():
         entry_fecha_devolucion.set_date(datetime.strptime(vals[7], "%Y-%m-%d").date())
     except Exception:
         pass
-    id_prestamo_editar = vals[0]
+    id_prestamo_editar = vals[0]   #la funcion completa es todo ui, no toca la base de datos
 
 def guardar_cambios_prestamo():
 
@@ -366,12 +374,7 @@ def guardar_cambios_prestamo():
     if not all(datos[:-1]):
         messagebox.showwarning("Atención", "Complete todos los campos del préstamo.")
         return
-    cursor.execute("""
-        UPDATE prestamos
-        SET nombre=?, telefono=?, carrera=?, anio_cursada=?, libro=?, fecha_prestamo=?, fecha_devolucion=?
-        WHERE id=?
-    """, datos)
-    conn.commit()
+    lp.guardar_cambios_prestamo_db(datos) 
     id_prestamo_editar = None
     limpiar_prestamo()
     mostrar_prestamos()
@@ -391,8 +394,8 @@ def eliminar_prestamo():
         mostrar_prestamos()
         limpiar_prestamo()
 
-def _abrir_ventana_lista_prestamos(titulo, query, params=()):
-    """Abre una ventana genérica de solo lectura con una lista de préstamos."""
+def _abrir_ventana_lista_prestamos(titulo, regs):
+    """Abre una ventana genérica de solo lectura con una lista de préstamos ya traída (regs)."""
     win = tb.Toplevel(root)
     win.title(titulo)
     win.geometry("820x420")
@@ -412,8 +415,6 @@ def _abrir_ventana_lista_prestamos(titulo, query, params=()):
     tree.tag_configure("oddrow", background="#2a343d")
     tree.tag_configure("evenrow", background="#38444d")
 
-    cursor.execute(query, params)
-    regs = cursor.fetchall()
     hoy = datetime.now().date()
     for i, r in enumerate(regs):
         estado = "Devuelto" if r[8] == 1 else "Activo"
@@ -428,22 +429,6 @@ def _abrir_ventana_lista_prestamos(titulo, query, params=()):
 
     if not regs:
         tb.Label(frame, text="No hay registros para mostrar.").pack(pady=10)
-
-def ver_historial_prestamos():
-    """Muestra todos los préstamos, devueltos o no."""
-    _abrir_ventana_lista_prestamos(
-        "Historial de préstamos",
-        "SELECT * FROM prestamos ORDER BY id DESC"
-    )
-
-def ver_prestamos_caducados():
-    """Muestra los préstamos vencidos (no devueltos y con fecha de devolución pasada)."""
-    hoy = datetime.now().strftime("%Y-%m-%d")
-    _abrir_ventana_lista_prestamos(
-        "Préstamos caducados",
-        "SELECT * FROM prestamos WHERE devuelto=0 AND fecha_devolucion < ? ORDER BY fecha_devolucion ASC",
-        (hoy,)
-    )
 
 # -------------------------
 # Verificaciones / Notificaciones
