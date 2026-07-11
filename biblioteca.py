@@ -1,8 +1,10 @@
 # biblioteca_con_prestamos_ventanas.py
 import sqlite3
+import csv
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from tkinter import messagebox
+from tkinter import filedialog
 from tkinter import font as tkFont
 from datetime import datetime, timedelta
 
@@ -168,6 +170,77 @@ def eliminar_libro():
         actualizar_combo_libros_en_ventana_prestamos()
         limpiar_campos_libro()
 
+def importar_csv_libros():
+    """Importa libros desde un archivo .CSV a la base de datos."""
+    ruta = filedialog.askopenfilename(
+        title="Seleccionar archivo CSV",
+        filetypes=[("Archivos CSV", "*.csv"), ("Todos los archivos", "*.*")]
+    )
+    if not ruta:
+        return
+
+    columnas_esperadas = ["n_inv", "mfn", "fecha", "titulo", "autor", "editorial", "proc", "observaciones"]
+    insertados = 0
+    errores = 0
+
+    try:
+        with open(ruta, newline="", encoding="utf-8-sig") as f:
+            muestra = f.read(2048)
+            f.seek(0)
+            try:
+                dialect = csv.Sniffer().sniff(muestra)
+            except Exception:
+                dialect = csv.excel
+            lector = csv.reader(f, dialect)
+            filas = list(lector)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo leer el archivo:\n{e}")
+        return
+
+    if not filas:
+        messagebox.showwarning("Atención", "El archivo CSV está vacío.")
+        return
+
+    # Detecta si la primera fila es encabezado
+    primera = [c.strip().lower() for c in filas[0]]
+    tiene_encabezado = any(c in columnas_esperadas for c in primera)
+    inicio = 1 if tiene_encabezado else 0
+
+    if tiene_encabezado:
+        # Mapea columnas del CSV al orden esperado según el encabezado
+        indices = []
+        for col in columnas_esperadas:
+            indices.append(primera.index(col) if col in primera else None)
+    else:
+        indices = list(range(min(8, len(filas[0]))))
+        indices += [None] * (8 - len(indices))
+
+    for fila in filas[inicio:]:
+        if not fila or all(not c.strip() for c in fila):
+            continue
+        try:
+            valores = []
+            for idx in indices:
+                if idx is not None and idx < len(fila):
+                    valores.append(fila[idx].strip())
+                else:
+                    valores.append("")
+            if not valores[3]:  # título obligatorio
+                errores += 1
+                continue
+            cursor.execute("""
+                INSERT INTO libros (n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, tuple(valores))
+            insertados += 1
+        except Exception:
+            errores += 1
+
+    conn.commit()
+    mostrar_todos_libros()
+    actualizar_combo_libros_en_ventana_prestamos()
+    messagebox.showinfo("Importación finalizada", f"Libros importados: {insertados}\nFilas con error/omitidas: {errores}")
+
 # -------------------------
 # Funciones - Préstamos (ventana secundaria)
 # -------------------------
@@ -181,7 +254,7 @@ def abrir_ventana_prestamos():
 
     prestamos_win = tb.Toplevel(root)
     prestamos_win.title("Sistema de Préstamos")
-    prestamos_win.geometry("900x600")
+    prestamos_win.geometry("1100x600")
     prestamos_win.transient(root)
 
     # Layout del frame
@@ -227,10 +300,17 @@ def abrir_ventana_prestamos():
         pass
 
     # Botones
-    tb.Button(frame, text="Registrar préstamo", command=guardar_prestamo, bootstyle="success-outline").grid(row=4, column=0, padx=6, pady=8)
-    tb.Button(frame, text="Marcar devuelto", command=marcar_devueltos, bootstyle="warning-outline").grid(row=4, column=1, padx=6, pady=8)
-    tb.Button(frame, text="Limpiar", command=limpiar_prestamo, bootstyle="secondary-outline").grid(row=4, column=2, padx=6, pady=8)
-    tb.Button(frame, text="Actualizar lista libros", command=lambda: combo_libros.configure(values=actualizar_lista_libros_combo()), bootstyle="info-outline").grid(row=4, column=3, padx=6, pady=8)
+    btn_frame_prestamos = tb.Frame(frame)
+    btn_frame_prestamos.grid(row=4, column=0, columnspan=4, pady=8)
+    tb.Button(btn_frame_prestamos, text="Registrar préstamo", command=guardar_prestamo, bootstyle="success-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Editar préstamo", command=editar_prestamo, bootstyle="info-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Guardar cambios", command=guardar_cambios_prestamo, bootstyle="secondary-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Eliminar préstamo", command=eliminar_prestamo, bootstyle="danger-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Marcar devuelto", command=marcar_devueltos, bootstyle="warning-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Limpiar", command=limpiar_prestamo, bootstyle="secondary-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Actualizar lista libros", command=lambda: combo_libros.configure(values=actualizar_lista_libros_combo()), bootstyle="info-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Ver historial", command=ver_historial_prestamos, bootstyle="info-outline").pack(side="left", padx=4)
+    tb.Button(btn_frame_prestamos, text="Ver caducados", command=ver_prestamos_caducados, bootstyle="danger-outline").pack(side="left", padx=4)
 
     # Tabla de préstamos activos
     tree_frame = tb.Frame(frame)
@@ -352,6 +432,133 @@ def marcar_devueltos():
     mostrar_prestamos()
     messagebox.showinfo("Devolución", "Préstamo marcado como devuelto.")
 
+def editar_prestamo():
+    """Carga el préstamo seleccionado en el formulario para poder editarlo."""
+    global id_prestamo_editar
+    sel = tree_prestamos.selection()
+    if not sel:
+        messagebox.showinfo("Atención", "Seleccioná un préstamo para editar.")
+        return
+    vals = tree_prestamos.item(sel, "values")
+    # vals: id, nombre, telefono, carrera, anio, libro, fecha_prestamo, fecha_devolucion
+    entry_nombre.delete(0, "end"); entry_nombre.insert(0, vals[1])
+    entry_tel.delete(0, "end"); entry_tel.insert(0, vals[2])
+    entry_carrera.delete(0, "end"); entry_carrera.insert(0, vals[3])
+    entry_anio.delete(0, "end"); entry_anio.insert(0, vals[4])
+    combo_libros.set(vals[5])
+    try:
+        entry_fecha_prestamo.set_date(datetime.strptime(vals[6], "%Y-%m-%d").date())
+        entry_fecha_devolucion.set_date(datetime.strptime(vals[7], "%Y-%m-%d").date())
+    except Exception:
+        pass
+    id_prestamo_editar = vals[0]
+
+def guardar_cambios_prestamo():
+    """Guarda los cambios hechos sobre un préstamo cargado con 'Editar préstamo'."""
+    global id_prestamo_editar
+    if not id_prestamo_editar:
+        messagebox.showwarning("Atención", "Primero seleccioná un préstamo y presioná 'Editar préstamo'.")
+        return
+    try:
+        fecha_p = entry_fecha_prestamo.get_date().strftime("%Y-%m-%d")
+        fecha_d = entry_fecha_devolucion.get_date().strftime("%Y-%m-%d")
+    except Exception:
+        fecha_p = entry_fecha_prestamo.get()
+        fecha_d = entry_fecha_devolucion.get()
+
+    datos = (
+        entry_nombre.get().strip(),
+        entry_tel.get().strip(),
+        entry_carrera.get().strip(),
+        entry_anio.get().strip(),
+        combo_libros.get().strip(),
+        fecha_p,
+        fecha_d,
+        id_prestamo_editar
+    )
+    if not all(datos[:-1]):
+        messagebox.showwarning("Atención", "Complete todos los campos del préstamo.")
+        return
+    cursor.execute("""
+        UPDATE prestamos
+        SET nombre=?, telefono=?, carrera=?, anio_cursada=?, libro=?, fecha_prestamo=?, fecha_devolucion=?
+        WHERE id=?
+    """, datos)
+    conn.commit()
+    id_prestamo_editar = None
+    limpiar_prestamo()
+    mostrar_prestamos()
+    messagebox.showinfo("Actualizado", "Préstamo actualizado correctamente.")
+
+def eliminar_prestamo():
+    """Elimina el préstamo seleccionado."""
+    global id_prestamo_editar
+    sel = tree_prestamos.selection()
+    if not sel:
+        messagebox.showwarning("Atención", "Seleccioná un préstamo para eliminar.")
+        return
+    vals = tree_prestamos.item(sel, "values")
+    if messagebox.askyesno("Confirmar", f"¿Eliminar el préstamo de '{vals[1]}' ({vals[5]})?"):
+        cursor.execute("DELETE FROM prestamos WHERE id=?", (vals[0],))
+        conn.commit()
+        id_prestamo_editar = None
+        mostrar_prestamos()
+        limpiar_prestamo()
+
+def _abrir_ventana_lista_prestamos(titulo, query, params=()):
+    """Abre una ventana genérica de solo lectura con una lista de préstamos."""
+    win = tb.Toplevel(root)
+    win.title(titulo)
+    win.geometry("820x420")
+    win.transient(root)
+
+    frame = tb.Frame(win, padding=8)
+    frame.pack(fill="both", expand=True)
+
+    cols = ("id", "nombre", "telefono", "carrera", "anio", "libro", "fecha_prestamo", "fecha_devolucion", "estado")
+    tree = tb.Treeview(frame, columns=cols, show="headings", height=16)
+    tree.pack(fill="both", expand=True)
+    headers = ["ID", "Nombre", "Teléfono", "Carrera", "Año", "Libro", "F. Préstamo", "F. Devolución", "Estado"]
+    widths = [40, 120, 100, 110, 50, 200, 90, 90, 90]
+    for c, h, w in zip(cols, headers, widths):
+        tree.heading(c, text=h)
+        tree.column(c, width=w)
+    tree.tag_configure("oddrow", background="#2a343d")
+    tree.tag_configure("evenrow", background="#38444d")
+
+    cursor.execute(query, params)
+    regs = cursor.fetchall()
+    hoy = datetime.now().date()
+    for i, r in enumerate(regs):
+        estado = "Devuelto" if r[8] == 1 else "Activo"
+        try:
+            fd = datetime.strptime(r[7], "%Y-%m-%d").date()
+            if r[8] == 0 and fd < hoy:
+                estado = "Vencido"
+        except Exception:
+            pass
+        tag = "evenrow" if i % 2 == 0 else "oddrow"
+        tree.insert("", "end", values=(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], estado), tags=(tag,))
+
+    if not regs:
+        tb.Label(frame, text="No hay registros para mostrar.").pack(pady=10)
+
+def ver_historial_prestamos():
+    """Muestra todos los préstamos, devueltos o no."""
+    _abrir_ventana_lista_prestamos(
+        "Historial de préstamos",
+        "SELECT * FROM prestamos ORDER BY id DESC"
+    )
+
+def ver_prestamos_caducados():
+    """Muestra los préstamos vencidos (no devueltos y con fecha de devolución pasada)."""
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    _abrir_ventana_lista_prestamos(
+        "Préstamos caducados",
+        "SELECT * FROM prestamos WHERE devuelto=0 AND fecha_devolucion < ? ORDER BY fecha_devolucion ASC",
+        (hoy,)
+    )
+
 # -------------------------
 # Verificaciones / Notificaciones
 # -------------------------
@@ -379,7 +586,7 @@ def verificar_vencimientos_al_iniciar():
 # -------------------------
 root = tb.Window(themename="superhero")
 root.title("Sistema de Biblioteca - Libros")
-root.geometry("1100x700")
+root.geometry("1280x720")
 root.resizable(True, True)
 
 label_font = tkFont.Font(family="Helvetica", size=9)
@@ -430,6 +637,9 @@ tb.Button(btn_frame, text="Guardar libro", command=guardar_libro, bootstyle="suc
 tb.Button(btn_frame, text="Limpiar", command=limpiar_campos_libro, bootstyle="secondary-outline").pack(side="left", padx=6)
 tb.Button(btn_frame, text="Eliminar libro", command=eliminar_libro, bootstyle="danger-outline").pack(side="left", padx=6)
 tb.Button(btn_frame, text="Abrir préstamos", command=abrir_ventana_prestamos, bootstyle="info-outline").pack(side="left", padx=6)
+tb.Button(btn_frame, text="Ver historial", command=ver_historial_prestamos, bootstyle="info-outline").pack(side="left", padx=6)
+tb.Button(btn_frame, text="Ver préstamos caducados", command=ver_prestamos_caducados, bootstyle="danger-outline").pack(side="left", padx=6)
+tb.Button(btn_frame, text="Importar base de datos .CSV", command=importar_csv_libros, bootstyle="warning-outline").pack(side="left", padx=6)
 
 # Buscador y orden
 search_frame = tb.Frame(frame_libros)
@@ -472,6 +682,7 @@ prestamos_win = None
 combo_libros = None
 tree_prestamos = None
 entry_nombre = entry_tel = entry_carrera = entry_anio = entry_fecha_prestamo = entry_fecha_devolucion = None
+id_prestamo_editar = None
 
 # -------------------------
 # Inicio
