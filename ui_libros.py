@@ -118,65 +118,13 @@ def importar_csv_libros():
     )
     if not ruta:
         return
-
-    columnas_esperadas = ["n_inv", "mfn", "fecha", "titulo", "autor", "editorial", "proc", "observaciones"]
-    insertados = 0
-    errores = 0
-
+#aca la ui es la encargada de mostrar el error si el archivo no se puede leer
     try:
-        with open(ruta, newline="", encoding="utf-8-sig") as f:
-            muestra = f.read(2048)
-            f.seek(0)
-            try:
-                dialect = csv.Sniffer().sniff(muestra)
-            except Exception:
-                dialect = csv.excel
-            lector = csv.reader(f, dialect)
-            filas = list(lector)
+        insertados, errores = ll.importar_csv_libros_db(ruta)
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo leer el archivo:\n{e}")
         return
 
-    if not filas:
-        messagebox.showwarning("Atención", "El archivo CSV está vacío.")
-        return
-
-    # Detecta si la primera fila es encabezado
-    primera = [c.strip().lower() for c in filas[0]]
-    tiene_encabezado = any(c in columnas_esperadas for c in primera)
-    inicio = 1 if tiene_encabezado else 0
-
-    if tiene_encabezado:
-        # Mapea columnas del CSV al orden esperado según el encabezado
-        indices = []
-        for col in columnas_esperadas:
-            indices.append(primera.index(col) if col in primera else None)
-    else:
-        indices = list(range(min(8, len(filas[0]))))
-        indices += [None] * (8 - len(indices))
-
-    for fila in filas[inicio:]:
-        if not fila or all(not c.strip() for c in fila):
-            continue
-        try:
-            valores = []
-            for idx in indices:
-                if idx is not None and idx < len(fila):
-                    valores.append(fila[idx].strip())
-                else:
-                    valores.append("")
-            if not valores[3]:  # título obligatorio
-                errores += 1
-                continue
-            cursor.execute("""
-                INSERT INTO libros (n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, tuple(valores))
-            insertados += 1
-        except Exception:
-            errores += 1
-
-    conn.commit()
     mostrar_todos_libros()
     actualizar_combo_libros_en_ventana_prestamos()
     messagebox.showinfo("Importación finalizada", f"Libros importados: {insertados}\nFilas con error/omitidas: {errores}")

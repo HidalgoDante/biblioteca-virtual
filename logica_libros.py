@@ -1,3 +1,4 @@
+import csv
 from db import conn, cursor
 
 def eliminar_libro_db(id_libro):
@@ -53,3 +54,59 @@ def actualizar_lista_libros_combo_db():
     """Actualiza la lista de libros"""
     cursor.execute("SELECT titulo FROM libros ORDER BY titulo ASC")
     return [r[0] for r in cursor.fetchall()]
+
+def importar_csv_libros_db(ruta):
+    """Lee un CSV de libros desde 'ruta' e inserta las filas válidas en la tabla libros.
+    Levanta una excepción si el archivo no se puede leer.
+    Devuelve (insertados, errores)."""
+    columnas_esperadas = ["n_inv", "mfn", "fecha", "titulo", "autor", "editorial", "proc", "observaciones"]
+    insertados = 0
+    errores = 0
+
+    with open(ruta, newline="", encoding="utf-8-sig") as f:
+        muestra = f.read(2048)
+        f.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(muestra)
+        except Exception:
+            dialect = csv.excel
+        lector = csv.reader(f, dialect)
+        filas = list(lector)
+
+    if not filas:
+        return (0, 0)
+    
+    primera = [c.strip().lower() for c in filas[0]]
+    tiene_encabezado = any(c in columnas_esperadas for c in primera)
+    inicio = 1 if tiene_encabezado else 0
+
+    if tiene_encabezado:
+        indices = []
+        for col in columnas_esperadas:
+            indices.append(primera.index(col) if col in primera else None)
+    else:
+        indices = list(range(min(8, len(filas[0]))))
+        indices += [None] * (8 - len(indices))
+    
+    for fila in filas[inicio:]:
+        if not fila or all(not c.strip() for c in fila):
+            continue
+        try:
+            valores = []
+            for idx in indices:
+                if idx is not None and idx < len(fila):
+                    valores.append(fila[idx].strip())
+                else:
+                    valores.append("")
+            if not valores[3]:  # título obligatorio
+                errores += 1
+                continue
+            cursor.execute("""INSERT INTO libros (n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, valores)
+            insertados += 1
+        except Exception:
+            errores += 1
+
+    conn.commit()
+    return (insertados, errores)
