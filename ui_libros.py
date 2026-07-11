@@ -9,6 +9,8 @@ from tkinter import font as tkFont
 from datetime import datetime, timedelta
 from db import conn, cursor
 import logica_libros as ll
+import logica_prestamos as lp
+
 # -------------------------
 # Funciones - Libros
 # -------------------------
@@ -272,11 +274,7 @@ def guardar_prestamo():
     if not all(datos):
         messagebox.showwarning("Atención", "Complete todos los campos del préstamo.")
         return
-    cursor.execute("""
-        INSERT INTO prestamos (nombre, telefono, carrera, anio_cursada, libro, fecha_prestamo, fecha_devolucion)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, datos)
-    conn.commit()
+    lp.guardar_prestamo_db(datos)
     limpiar_prestamo()
     mostrar_prestamos()
     messagebox.showinfo("Registrado", "Préstamo registrado correctamente.")
@@ -315,8 +313,7 @@ def marcar_devueltos():
         messagebox.showinfo("Atención", "Seleccioná un préstamo para marcar como devuelto.")
         return
     vals = tree_prestamos.item(sel, "values")
-    cursor.execute("UPDATE prestamos SET devuelto=1 WHERE id=?", (vals[0],))
-    conn.commit()
+    lp.marcar_devuelto_db(vals[0]) #llamo a el primer item, osea id
     mostrar_prestamos()
     messagebox.showinfo("Devolución", "Préstamo marcado como devuelto.")
 
@@ -342,7 +339,9 @@ def editar_prestamo():
     id_prestamo_editar = vals[0]
 
 def guardar_cambios_prestamo():
+
     """Guarda los cambios hechos sobre un préstamo cargado con 'Editar préstamo'."""
+    
     global id_prestamo_editar
     if not id_prestamo_editar:
         messagebox.showwarning("Atención", "Primero seleccioná un préstamo y presioná 'Editar préstamo'.")
@@ -387,8 +386,7 @@ def eliminar_prestamo():
         return
     vals = tree_prestamos.item(sel, "values")
     if messagebox.askyesno("Confirmar", f"¿Eliminar el préstamo de '{vals[1]}' ({vals[5]})?"):
-        cursor.execute("DELETE FROM prestamos WHERE id=?", (vals[0],))
-        conn.commit()
+        lp.eliminar_prestamo_db(vals[0])
         id_prestamo_editar = None
         mostrar_prestamos()
         limpiar_prestamo()

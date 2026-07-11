@@ -9,7 +9,9 @@ def eliminar_libro_db(id_libro):
     conn.commit()
 
 def insertar_libro_db(datos):
+
     """datos = (n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones)"""
+    
     cursor.execute("""
         INSERT INTO libros (n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
