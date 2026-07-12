@@ -21,7 +21,7 @@ Antes de la implementación, los préstamos y devoluciones se registraban manual
 ✔ Gestión de préstamos
 ✔ Visualización de historial de movimientos
 ✔ Control de préstamos vencidos
-✔ Importación de datos mediante archivo CSV
+✔ Importación y exportación de datos mediante archivo CSV
 ✔ Interfaz gráfica intuitiva desarrollada en Tkinter
 
 🖥️ Capturas del sistema
@@ -29,8 +29,8 @@ Antes de la implementación, los préstamos y devoluciones se registraban manual
 ![Ventana de préstamos](screenshots/ventana_prestamos.png)
 
 🛠️ Tecnologías utilizadas
-Python 
-Tkinter (interfaz gráfica)
+Python
+ttkbootstrap (interfaz gráfica, sobre Tkinter)
 SQLite (base de datos local)
 
 🗂️ Estructura del proyecto
@@ -47,16 +47,26 @@ Biblioteca/
 
 🚀 Cómo ejecutar el proyecto
 
-1. git clone https://github.com/HidalgoDante/biblioteca-virtual.git
-2. cd biblioteca-virtual
-3. python -m venv venv
-4. venv\Scripts\activate      # Windows
-5. pip install -r requirements.txt
-6. python main.py
+```bash
+git clone https://github.com/HidalgoDante/biblioteca-virtual.git
+cd biblioteca-virtual
+python -m venv venv
+venv\Scripts\activate      # Windows
+pip install -r requirements.txt
+python main.py
+```
 
 🧠 Objetivo del proyecto
 
 El objetivo fue aplicar conceptos de desarrollo de software de escritorio, manejo de bases de datos relacionales y diseño de interfaces gráficas utilizando Python.
+
+🔧 Decisiones de diseño
+- Separación en capas (interfaz / lógica de datos / conexión) para facilitar el mantenimiento y testing.
+- SQLite por simplicidad, al ser una app de escritorio de un solo usuario.
+
+📈 Posibles mejoras
+- Migrar a una base de datos con soporte multiusuario (PostgreSQL/MySQL).
+- Agregar tests automatizados.
 
 👨‍💻 Autor
 Este proyecto fue desarrollado por:
@@ -65,3 +75,7 @@ Este proyecto fue desarrollado por:
 
 Como parte de las Prácticas Profesionalizantes de la Tecnicatura Superior en Análisis de Sistemas.
 En búsqueda de mi primera experiencia profesional en el área IT.
+
+📫 Contacto
+LinkedIn: www.linkedin.com/in/dante-sebastian-hidalgo-635670237
+Email: hidalgodante05@gmail.com
