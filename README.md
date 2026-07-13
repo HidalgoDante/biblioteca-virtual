@@ -68,10 +68,13 @@ El objetivo fue aplicar conceptos de desarrollo de software de escritorio, manej
 - Migrar a una base de datos con soporte multiusuario (PostgreSQL/MySQL).
 - Agregar tests automatizados.
 
-👨‍💻 Autor
-Este proyecto fue desarrollado por:
+👨‍💻 Autores
 
-- Dante Sebastián Hidalgo
+Proyecto desarrollado como parte de las Prácticas Profesionalizantes de la Tecnicatura Superior en Análisis de Sistemas.
+
+- **Dante Sebastián Hidalgo** — desarrollo del sistema de préstamos, importación y exportación de datos vía CSV, rediseño de la interfaz gráfica, y refactorización completa del proyecto a una arquitectura modular (separación en capas de datos, lógica de negocio e interfaz — ver sección "Estructura del proyecto").
+
+- **Fernando Buiani** — diseño visual inicial de la aplicación.
 
 Como parte de las Prácticas Profesionalizantes de la Tecnicatura Superior en Análisis de Sistemas.
 En búsqueda de mi primera experiencia profesional en el área IT.
