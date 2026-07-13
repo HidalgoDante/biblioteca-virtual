@@ -132,6 +132,23 @@ def importar_csv_libros():
     up.refrescar_combo_libros()
     messagebox.showinfo("Importación finalizada", f"Libros importados: {insertados}\nFilas con error/omitidas: {errores}")
 
+def exportar_csv_libros():
+    """Exporta la base de datos en un archivo .CSV"""
+    ruta = filedialog.asksaveasfilename(
+        title="Guardar catálogo como",
+        defaultextension=".csv",
+        filetypes=[("Archivos CSV", "*.csv"), ("Todos los archivos", "*.*")]
+    )
+    if not ruta:
+        return
+    try:
+        cantidad = ll.exportar_csv_libros_db(ruta)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se puede guardar el archivo en la ruta:\n{e}")
+        return
+    
+    messagebox.showinfo("Exportación finalizada", f"Se exportaron {cantidad} libros a:\n{ruta}")
+
 # -------------------------
 # Verificaciones / Notificaciones
 # -------------------------
@@ -161,7 +178,7 @@ def construir_ventana_libros():
     """Arma todos los widgets de la ventana principal de libros. Se llama una vez desde main.py."""
     global entry_inv, entry_mfn, entry_fecha, entry_titulo, entry_autor, entry_editorial, entry_proc, entry_obs, tree_libros, combo_orden, entry_buscar_inv, entry_buscar_fecha, id_seleccionado
     root.title("Biblioteca Virtual")
-    root.geometry("1340x720")
+    root.geometry("1370x720")
     root.resizable(True, True)
 
     label_font = tkFont.Font(family="Helvetica", size=9)
@@ -215,6 +232,7 @@ def construir_ventana_libros():
     tb.Button(btn_frame, text="Ver historial", command=up.ver_historial_prestamos, bootstyle="info-outline").pack(side="left", padx=6)
     tb.Button(btn_frame, text="Ver préstamos caducados", command=up.ver_prestamos_caducados, bootstyle="danger-outline").pack(side="left", padx=6)
     tb.Button(btn_frame, text="Importar base de datos .CSV", command=importar_csv_libros, bootstyle="warning-outline").pack(side="left", padx=6)
+    tb.Button(btn_frame, text="Exportar base de datos .CSV", command=exportar_csv_libros, bootstyle="success-outline").pack(side="left", padx=6)
 
     # Buscador y orden
     search_frame = tb.Frame(frame_libros)

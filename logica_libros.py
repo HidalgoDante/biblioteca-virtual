@@ -104,3 +104,16 @@ def importar_csv_libros_db(ruta):
 
     conn.commit()
     return (insertados, errores)
+
+def exportar_csv_libros_db(ruta):
+    """Exporta todos los libros de la base a un archivo CSV en 'ruta'.
+    Devuelve la cantidad de libros exportados."""
+    cursor.execute("SELECT n_inv, mfn, fecha, titulo, autor, editorial, proc, observaciones FROM libros")
+    regs = cursor.fetchall()
+
+    columnas = ["n_inv", "mfn", "fecha", "titulo", "autor", "editorial", "proc", "observaciones"]
+    with open(ruta, "w", newline="", encoding="utf-8") as f:  #Abre el archivo
+        escritor = csv.writer(f)    #Se le da formato csv
+        escritor.writerow(columnas)  #Escribe solamente una fila
+        escritor.writerows(regs)     #Escribe muchas filas de una (todos los libros de regs)
+    return len(regs) #Devuelve cuantos libros se exportaron
