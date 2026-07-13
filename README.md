@@ -25,10 +25,12 @@ Antes de la implementación, los préstamos y devoluciones se registraban manual
 ✔ Interfaz gráfica intuitiva desarrollada en Tkinter
 
 🖥️ Capturas del sistema
+
 ![Ventana principal de gestión de libros](screenshots/ventana_libros.png)
 ![Ventana de préstamos](screenshots/ventana_prestamos.png)
 
 🛠️ Tecnologías utilizadas
+
 Python
 ttkbootstrap (interfaz gráfica, sobre Tkinter)
 SQLite (base de datos local)
