@@ -57,6 +57,7 @@ venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 python main.py
 ```
+Para correr los tests: pip install -r requirements-dev.txt
 
 🧠 Objetivo del proyecto
 
