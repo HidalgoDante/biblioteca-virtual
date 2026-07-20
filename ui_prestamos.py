@@ -10,11 +10,13 @@ import logica_libros as ll
 
 # Referencia a la ventana principal, la completa main.py al arrancar
 root = None
+icono = None
 
-def init(ventana_root):
+def init(ventana_root, ruta_icono = None):
     """Main.py llama a esto una vez, al iniciar, para darle a este módulo la ventana principal."""
-    global root
+    global root, icono
     root = ventana_root
+    icono = ruta_icono
 
 # Variables globales de esta ventana (se completan cuando se abre)
 prestamos_win = None
@@ -29,12 +31,13 @@ id_prestamo_editar = None
 
 def abrir_ventana_prestamos():
     """Abre (o trae al frente) la ventana de préstamos."""
-    global prestamos_win, combo_libros
+    global prestamos_win, combo_libros, icono
     if prestamos_win is not None and prestamos_win.winfo_exists():
         prestamos_win.lift()
         return
 
     prestamos_win = tb.Toplevel(root)
+    prestamos_win.iconbitmap(icono)
     prestamos_win.title("Sistema de Préstamos")
     prestamos_win.geometry("1100x600")
     prestamos_win.transient(root)
@@ -263,7 +266,9 @@ def eliminar_prestamo():
 
 def _abrir_ventana_lista_prestamos(titulo, regs):
     """Abre una ventana genérica de solo lectura con una lista de préstamos ya traída (regs)."""
+    global icono
     win = tb.Toplevel(root)
+    win.iconbitmap(icono)
     win.title(titulo)
     win.geometry("820x420")
     win.transient(root)
