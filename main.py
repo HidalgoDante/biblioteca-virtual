@@ -1,10 +1,19 @@
 import os
+import sys
 import ttkbootstrap as tb
 import ui_libros as ul
 import ui_prestamos as up
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  #__file__ llena automáticamente con la ruta del archivo actual
-ICONO = os.path.join(BASE_DIR, "icono.ico")
+def ruta_recurso(nombre_archivo):
+    """Devuelve la ruta correcta al recurso, tanto si el programa corre como script
+    como si corre empaquetado con PyInstaller."""
+    if hasattr(sys, "_MEIPASS"):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, nombre_archivo)
+
+ICONO = os.path.join("icono.ico")
 
 #Iniciamos el programa
 root = tb.Window(themename="darkly")
