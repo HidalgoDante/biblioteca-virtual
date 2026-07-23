@@ -18,7 +18,6 @@ ICONO = ruta_recurso("icono.ico")
 
 #Iniciamos el programa
 root = tb.Window(themename="darkly")
-messagebox.showinfo("Debug", f"Buscando ícono en:\n{ICONO}\n¿Existe? {os.path.exists(ICONO)}")
 root.iconbitmap(ICONO)
 ul.init(root)
 up.init(root, ICONO)
