@@ -3,7 +3,6 @@ import sys
 import ttkbootstrap as tb
 import ui_libros as ul
 import ui_prestamos as up
-from tkinter import messagebox
 
 def ruta_recurso(nombre_archivo):
     """Devuelve la ruta correcta al recurso, tanto si el programa corre como script
