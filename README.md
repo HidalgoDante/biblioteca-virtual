@@ -47,6 +47,10 @@ Biblioteca/
 ├── ui_libros.py           # Interfaz - ventana principal
 └── ui_prestamos.py        # Interfaz - ventana de préstamos
 
+📥 Descarga rápida (sin instalar Python)
+
+¿Solo querés probar la app? Descargá el ejecutable para Windows desde la sección de [Releases](https://github.com/HidalgoDante/biblioteca-virtual/releases/tag/v1.0.0) — no requiere tener Python instalado.
+
 🚀 Cómo ejecutar el proyecto
 
 ```bash
