@@ -1,0 +1,25 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Entorno virtual ---
+venv/
+env/
+
+# --- Base de datos local (cada quien genera la suya) ---
+biblioteca.db
+
+# --- PyInstaller (generados al crear el ejecutable) ---
+build/
+dist/
+*.spec
+
+# --- Tests ---
+.pytest_cache/
+
+# --- Archivos del editor / sistema operativo ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
